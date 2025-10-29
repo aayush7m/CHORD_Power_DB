@@ -74,7 +74,7 @@ def create_parser():
     parser_read.add_argument("chip_letter", type=str, choices=['a', 'b', 'A', 'B'], help="Chip letter ('a' or 'b').")
     parser_read.add_argument("operation", type=str, help="Operation name (e.g., OUT, DIAG_OLON, HWCR_OCL, STD_DIAG).")
     parser_read.set_defaults(func=read_command)
-
+ 
     # Subparser for std_diag
     parser_std_diag = subparsers.add_parser("std_diag", help="Get standard diagnostic information.")
     parser_std_diag.set_defaults(func=std_diag)

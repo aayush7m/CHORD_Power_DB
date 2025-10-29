@@ -4,8 +4,9 @@ and exposes it on /metrics for scraping.
 """
 import time
 import requests
+import threading
 import config, spi_ops, utilities
-from prometheus_client import Gauge
+from prometheus_client import Gauge, start_http_server
 
 # Define Prometheus Gauge metrics
 
@@ -19,6 +20,7 @@ gauge_diag_flag = Gauge(
 DIAG_URL = f"http://{config.post_ip}:{config.post_port}/std_diag"
 
 # The index corresponds to the bit position in the 16-bit string, from MSB (0) to LSB (15)
+#  in enumerate, first bit has idx 0 in tuple, but should be bit 15, so keys are in reverse order.
 FLAG_NAMES = {
     0: "std_diag_frame_identifier",  # Bit 15: Standard Diagnosis Frame (always 0)
     1: "vs_undervoltage",            # Bit 14: Vs Undervoltage Monitor (1 = undervoltage)
@@ -30,12 +32,12 @@ FLAG_NAMES = {
     7: "open_load_off_state",        # Bit 8:  OL OFF - Open Load in OFF state (1 = detected)
     8: "ch7_overload_overtemp",      # Bit 7:  ERR7 - Overload/Overtemp on Channel 7 (1 = failure)
     9: "ch6_overload_overtemp",      # Bit 6:  ERR6 - Overload/Overtemp on Channel 6 (1 = failure)
-    10: "ch5_overload_overtemp",     # Bit 5:  ERR5 - Overload/Overtemp on Channel 5 (1 = failure)
-    11: "ch4_overload_overtemp",     # Bit 4:  ERR4 - Overload/Overtemp on Channel 4 (1 = failure)
-    12: "ch3_overload_overtemp",     # Bit 3:  ERR3 - Overload/Overtemp on Channel 3 (1 = failure)
-    13: "ch2_overload_overtemp",     # Bit 2:  ERR2 - Overload/Overtemp on Channel 2 (1 = failure)
-    14: "ch1_overload_overtemp",     # Bit 1:  ERR1 - Overload/Overtemp on Channel 1 (1 = failure)
-    15: "ch0_overload_overtemp"      # Bit 0:  ERR0 - Overload/Overtemp on Channel 0 (1 = failure)
+    10: "ch5_overload_overtemp",      # Bit 5:  ERR5 - Overload/Overtemp on Channel 5 (1 = failure)
+    11: "ch4_overload_overtemp",      # Bit 4:  ERR4 - Overload/Overtemp on Channel 4 (1 = failure)
+    12: "ch3_overload_overtemp",      # Bit 3:  ERR3 - Overload/Overtemp on Channel 3 (1 = failure)
+    13: "ch2_overload_overtemp",      # Bit 2:  ERR2 - Overload/Overtemp on Channel 2 (1 = failure)
+    14: "ch1_overload_overtemp",      # Bit 1:  ERR1 - Overload/Overtemp on Channel 1 (1 = failure)
+    15: "ch0_overload_overtemp"       # Bit 0:  ERR0 - Overload/Overtemp on Channel 0 (1 = failure)
 }
 
 def fetch_and_update():
@@ -79,12 +81,19 @@ def fetch_and_update():
                                 flag_value = int(bit_char)
                                 flag_name = FLAG_NAMES.get(flag_pos, f"unknown_flag_{flag_pos}")
                                 
+                                # gauge_diag_flag.labels(
+                                #     board=str(board_index),
+                                #     chip=chip_letter,
+                                #     flag_position=str(flag_pos),
+                                #     flag_name=flag_name
+                                # ).set(flag_value)
+
                                 gauge_diag_flag.labels(
                                     board=str(board_index),
                                     chip=chip_letter,
                                     flag_position=str(flag_pos),
                                     flag_name=flag_name
-                                ).set(flag_value)
+                                ).set(0)
                             
                             print(f"Board {board_index}, Chip {chip_letter}: hex=0x{hex_value:04x}, binary={binary_str}")
                         else:
@@ -101,3 +110,9 @@ def fetch_and_update():
 
         # Wait before next fetch
         time.sleep(config.get_diag_freq)
+
+def start_prometheus_server(port=config.prometheus_port):
+    start_http_server(config.prometheus_port, addr=config.prometheus_ip)
+    # Start Prometheus data fetching in a separate thread
+    prometheus_thread = threading.Thread(target=fetch_and_update, daemon=True)
+    prometheus_thread.start()

@@ -1,4 +1,4 @@
-# sudo /bin/systemctl start grafana-server
+# cccc
 # ./prometheus --config.file=prometheus.yml
 spi_bus = 0 
 spi_device = 0
@@ -14,9 +14,10 @@ flask_ip = "0.0.0.0"
 flask_port = 5000
 
 prometheus_ip = "localhost"
-prometheus_port = 8004
+prometheus_port = 8000 # prometheus server listens on port 8000 as specified in the yml file.
+# yml file in ~/Documents/prometheus_server_aayush/smth/prometheus.yml
 
-get_diag_freq = 120
+get_diag_freq = 4
 
 
 class Ansi:

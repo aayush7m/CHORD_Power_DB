@@ -19,24 +19,16 @@ def _spi_worker():
         ct = 0
         try:
             with spi_lock:
-                print("doing the commands now")
                 for cmd in command_batch:
                     ct += 1
-                    print(f"cur cmd list is {cmd.cmd_list}")
                     latest_result = spi.xfer2(cmd.cmd_list)
     
         except Exception as e:
-            print(f"{Ansi.BOLD}{Ansi.ITALIC}{Ansi.RED}"
-                  f"SPI Transaction failed w/ Exception: {e}"
-                  f"{Ansi.RESET}")
-            print(f"{Ansi.BOLD}{Ansi.UNDERLINE}{Ansi.ITALIC}{Ansi.RED}"
-                  f"[ERROR]{Ansi.RESET} "
-                  f"{Ansi.BOLD}SPI transaction failed at batch index {ct}!{Ansi.RESET}")
-            print(f"{Ansi.BOLD}{Ansi.ITALIC}{Ansi.YELLOW}"
-                  "Batch command descriptions:"
-                  f"{Ansi.RESET}")
+            print(f"{Ansi.BOLD}{Ansi.ITALIC}{Ansi.RED}SPI Transaction failed w/ Exception: {e}")
+            print(f"{Ansi.UNDERLINE}[ERROR]{Ansi.RESET} {Ansi.BOLD}SPI transaction failed at batch index {ct}.")
+            print(f"{Ansi.ITALIC}{Ansi.YELLOW}Batch command descriptions:{Ansi.RESET}")
             for i, c in enumerate(command_batch):
-                print(f"  {Ansi.BOLD}[{i}]{Ansi.RESET} {getattr(c, 'text_cmd_list', c)}")
+                print(f"    {Ansi.BOLD}[{i}]{Ansi.RESET} {getattr(c, 'text_cmd_list', c)}")
 
 
         resp_container['result'] = latest_result
@@ -164,7 +156,6 @@ class Command:
 # std_diag_var = Command()
 
 def run (cmd_batch, w_resp=False):
-    print("hi hello ")
     resp_evt = threading.Event()
     resp = {}
     if w_resp:

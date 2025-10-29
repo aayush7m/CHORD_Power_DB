@@ -57,13 +57,15 @@ def read_command():
     except Exception as e:
         return jsonify({"error": f"Unexpected error during output operation: {str(e)}"}), 500
 
-
 @app.route('/std_diag', methods=['GET']) 
 def std_diag():
     try:
-        # response = utilities.convert(spi_ops.run([spi_ops.Command()], True),"bin")
+        # response = utilities.convert_int_list_base(spi_ops.run([spi_ops.Command()], True),"bin")
         response = spi_ops.run([spi_ops.Command()], True)
         return jsonify({"message": "Standard Diagnostic command executed successfully", "std_diag_response": response}), 200
 
     except Exception as e:
         return jsonify({"error": f"Unexpected error during diagnostic operation: {str(e)}"}), 500
+
+def start_flask_server ():
+    app.run(debug=False, host=config.flask_ip, port=config.post_port)
