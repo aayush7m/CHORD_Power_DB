@@ -1,0 +1,9 @@
+# Example Prometheus config for scraping the PD exporter.
+# Run with: ./prometheus --config.file=prometheus.yml
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: "chip_diagnostics_app"
+    static_configs:
+      - targets: ["localhost:8000"]  # must match config.prometheus_port

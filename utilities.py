@@ -30,10 +30,4 @@ def two_bytes_to_int(byte_list):
     if not all(isinstance(b, int) and 0 <= b <= 255 for b in byte_list):
         raise ValueError("Each element must be an integer between 0 and 255")
     
-    # Convert each byte to hex and concatenate
-    hex_strings = convert_int_list_base(byte_list, "hex")
-    # Remove '0x' prefix from each and concatenate
-    hex_result = "0x" + "".join(hex_str[2:] for hex_str in hex_strings)
-    
-    # Convert hex string to integer
-    return int(hex_result, 16)
+    return (byte_list[0] << 8) | byte_list[1]

@@ -5,7 +5,8 @@ and exposes it on /metrics for scraping.
 import time
 import requests
 import threading
-import config, spi_ops, utilities
+import socket
+import config, utilities
 from prometheus_client import Gauge, start_http_server
 
 # Define Prometheus Gauge metrics
@@ -81,19 +82,12 @@ def fetch_and_update():
                                 flag_value = int(bit_char)
                                 flag_name = FLAG_NAMES.get(flag_pos, f"unknown_flag_{flag_pos}")
                                 
-                                # gauge_diag_flag.labels(
-                                #     board=str(board_index),
-                                #     chip=chip_letter,
-                                #     flag_position=str(flag_pos),
-                                #     flag_name=flag_name
-                                # ).set(flag_value)
-
                                 gauge_diag_flag.labels(
                                     board=str(board_index),
                                     chip=chip_letter,
                                     flag_position=str(flag_pos),
                                     flag_name=flag_name
-                                ).set(0)
+                                ).set(flag_value)
                             
                             print(f"Board {board_index}, Chip {chip_letter}: hex=0x{hex_value:04x}, binary={binary_str}")
                         else:
@@ -111,8 +105,29 @@ def fetch_and_update():
         # Wait before next fetch
         time.sleep(config.get_diag_freq)
 
+def find_available_port(start_port, max_attempts=10):
+    """Find an available port starting from start_port."""
+    for port in range(start_port, start_port + max_attempts):
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.bind((config.prometheus_ip, port))
+                return port
+        except OSError:
+            continue
+    return None
+
 def start_prometheus_server(port=config.prometheus_port):
-    start_http_server(config.prometheus_port, addr=config.prometheus_ip)
+    """Start the /metrics exporter and the background diagnostics polling thread."""
+    available_port = find_available_port(port)
+    if available_port is None:
+        raise RuntimeError(f"No free port found for Prometheus exporter starting at {port}")
+    if available_port != port:
+        print(f"Port {port} is already in use, using {available_port} instead "
+              f"(update prometheus.yml to match).")
+    start_http_server(available_port, addr=config.prometheus_ip)
+    print(f"Prometheus exporter started on {config.prometheus_ip}:{available_port}")
+
     # Start Prometheus data fetching in a separate thread
     prometheus_thread = threading.Thread(target=fetch_and_update, daemon=True)
     prometheus_thread.start()
+    print("Prometheus data fetching thread started")

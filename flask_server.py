@@ -21,9 +21,7 @@ def write_command():
             # cmd.set_board_chip(board_idx, chip_letter, operation, 'r', None)
             cmd.set_all_boards(operation, 'r', None)
             my_list.append(copy.deepcopy(cmd))
-            print(f"my_list is {my_list}")
             response = utilities.convert_int_list_base(spi_ops.run(my_list, True),"bin")
-            print(f"\n\nHIII the response is: {response}")
         else:
             response = utilities.convert_int_list_base(spi_ops.run(my_list),"bin")
         return jsonify({"message": f"Write command {'w/' if verify else 'w/o'} verify executed successfully", "write_response": response}), 200
@@ -68,4 +66,4 @@ def std_diag():
         return jsonify({"error": f"Unexpected error during diagnostic operation: {str(e)}"}), 500
 
 def start_flask_server ():
-    app.run(debug=False, host=config.flask_ip, port=config.post_port)
+    app.run(debug=False, host=config.flask_ip, port=config.flask_port)
